@@ -61,6 +61,12 @@ enum _rtgui_event_type
 	RTGUI_EVENT_FOCUSED,               /* widget focused        */
 	RTGUI_EVENT_SCROLLED,              /* scroll bar scrolled   */
 	RTGUI_EVENT_RESIZE,                /* widget resize         */
+
+	/* application event */
+	RTGUI_EVENT_APP_CREATE,
+	RTGUI_EVENT_APP_DESTROY,
+	RTGUI_EVENT_APP_ACTIVATE,
+	RTGUI_EVENT_APP_DEACTIVATE,
 };
 typedef enum _rtgui_event_type rtgui_event_type;
 
@@ -318,7 +324,24 @@ struct rtgui_event_resize
 	rt_int16_t x, y;
 	rt_int16_t w, h;
 };
-#define RTGUI_EVENT_RESIZE_INIT(e) RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_RESIZE)
+#define RTGUI_EVENT_RESIZE_INIT(e) RTGUI_EVENT_INIT(&((e)->parent) RTGUI_EVENT_RESIZE)
+
+/*
+ * RTGUI Application Event
+ *
+ * In create_event, *app is the app that just got created.
+ * In distroy_event, *app is the app that will distroyed
+ * In {active,deactive}_event, *app is the target app.
+ */
+struct rtgui_event_app
+{
+	struct rtgui_event parent;
+	struct rtgui_application *app;
+};
+#define RTGUI_EVENT_APP_CREATE_INIT(e) RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_APP_CREATE)
+#define RTGUI_EVENT_APP_DESTROY_INIT(e) RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_APP_DESTROY)
+#define RTGUI_EVENT_APP_ACTIVATE_INIT(e) RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_APP_ACTIVATE)
+#define RTGUI_EVENT_APP_DEACTIVATE_INIT(e) RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_APP_DEACTIVATE)
 
 #undef _RTGUI_EVENT_WIN_ELEMENTS
 
@@ -348,5 +371,6 @@ union rtgui_event_generic
 	struct rtgui_event_scrollbar scrollbar;
 	struct rtgui_event_focused focused;
 	struct rtgui_event_resize resize;
+	struct rtgui_event_app app;
 };
 #endif

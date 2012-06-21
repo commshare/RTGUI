@@ -57,8 +57,12 @@ const char *event_string[] =
 
 	/* request's status event */
 	"STATUS",				/* request result 		*/
-	"SCROLLED",           	/* scroll bar scrolled  */
+	"SCROLLED",             /* scroll bar scrolled  */
 	"RESIZE",				/* widget resize 		*/
+	"APP_CREATE",
+	"APP_DESTROY",
+	"APP_ACTIVATE",
+	"APP_DEACTIVATE",
 };
 
 #define DBG_MSG(x)	rt_kprintf x
@@ -212,6 +216,17 @@ static void rtgui_event_dump(rt_thread_t tid, rtgui_event_t* event)
 			}
 		}
 		break;
+
+	case RTGUI_EVENT_APP_CREATE:
+	case RTGUI_EVENT_APP_DESTROY:
+	case RTGUI_EVENT_APP_ACTIVATE:
+	case RTGUI_EVENT_APP_DEACTIVATE:
+		{
+			struct rtgui_event_app *eapp = (struct rtgui_event_app*)event;
+			RT_ASSERT(eapp->app);
+			rt_kprintf("app: %s", eapp->app->name);
+		}
+		break;
 	}
 
 	rt_kprintf("\n");
@@ -284,9 +299,13 @@ struct rtgui_application* rtgui_application_create(
 
 	/* set application title */
 	app->name = (unsigned char*)rt_strdup((char*)myname);
-	if (app->name != RT_NULL)
-		return app;
+	if (app->name == RT_NULL)
+		goto __name_err;
 
+	return app;
+
+__name_err:
+	rt_mq_delete(app->mq);
 __mq_err:
 	rtgui_object_destroy(RTGUI_OBJECT(app));
 	tid->user_data = 0;
