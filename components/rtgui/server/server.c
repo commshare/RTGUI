@@ -23,7 +23,6 @@
 #include "topwin.h"
 
 static struct rt_thread *rtgui_server_tid;
-static struct rtgui_application *rtgui_server_application;
 
 void rtgui_server_handle_update(struct rtgui_event_update_end* event)
 {
@@ -301,6 +300,7 @@ static rt_bool_t rtgui_server_event_handler(struct rtgui_object *object,
  */
 static void rtgui_server_entry(void* parameter)
 {
+	struct rtgui_application *app;
 #ifdef _WIN32
 	/* set the server thread to highest */
 	HANDLE hCurrentThread = GetCurrentThread();
@@ -308,12 +308,13 @@ static void rtgui_server_entry(void* parameter)
 #endif
 
 	/* register rtgui server thread */
-	rtgui_server_application = rtgui_application_create(rtgui_server_tid,
-                                                        "rtgui");
-    if (rtgui_server_application == RT_NULL)
+	app = rtgui_application_create_with_role(rtgui_server_tid,
+			                                 "rtgui",
+											 RTGUI_APPLICATION_ROLE_SERVER);
+    if (app == RT_NULL)
         return;
 
-    rtgui_object_set_event_handler(RTGUI_OBJECT(rtgui_server_application),
+    rtgui_object_set_event_handler(RTGUI_OBJECT(app),
                                    rtgui_server_event_handler);
 	/* init mouse and show */
 	rtgui_mouse_init();
@@ -321,29 +322,9 @@ static void rtgui_server_entry(void* parameter)
 	rtgui_mouse_show_cursor();
 #endif
 
-    rtgui_application_run(rtgui_server_application);
+    rtgui_application_run(app);
 
-    rtgui_application_destroy(rtgui_server_application);
-    rtgui_server_application = RT_NULL;
-}
-
-void rtgui_server_post_event(struct rtgui_event* event, rt_size_t size)
-{
-	if (rtgui_server_tid != RT_NULL)
-		rtgui_application_send(rtgui_server_tid, event, size);
-	else
-		rt_kprintf("post when server is not running\n");
-}
-
-rt_err_t rtgui_server_post_event_sync(struct rtgui_event* event, rt_size_t size)
-{
-	if (rtgui_server_tid != RT_NULL)
-		return rtgui_application_send_sync(rtgui_server_tid, event, size);
-	else
-	{
-		rt_kprintf("post when server is not running\n");
-		return -RT_ENOSYS;
-	}
+    rtgui_application_destroy(app);
 }
 
 void rtgui_server_init(void)

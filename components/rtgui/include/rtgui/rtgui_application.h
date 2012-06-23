@@ -34,11 +34,25 @@ enum rtgui_application_flag
 	RTGUI_APPLICATION_FLAG_SHOWN   = 0x08
 };
 
+enum rtgui_application_role
+{
+	RTGUI_APPLICATION_ROLE_NORMAL = 0x00,
+	RTGUI_APPLICATION_ROLE_SERVER,
+#ifdef RTGUI_USING_APPMGR
+	RTGUI_APPLICATION_ROLE_APPMGR,
+#endif
+	/* keep it the last item */
+	RTGUI_APPLICATION_ROLE_MAX,
+};
+
 typedef void (*rtgui_idle_func)(struct rtgui_object* obj, struct rtgui_event *event);
 
 struct rtgui_application
 {
 	struct rtgui_object parent;
+	/* point to the next application which have the same role */
+	struct rtgui_application *next;
+	enum  rtgui_application_role role;
 
 	/* application name */
 	unsigned char *name;
@@ -66,7 +80,14 @@ struct rtgui_application
 };
 
 /**
- * create an application named @myname on thread @param tid
+ * create an application named @myname on thread @param tid with role @param role
+ */
+struct rtgui_application* rtgui_application_create_with_role(
+        rt_thread_t tid,
+        const char *myname,
+        enum rtgui_application_role);
+/**
+ * create a normal application named @param myname on thread @param tid
  */
 struct rtgui_application* rtgui_application_create(
         rt_thread_t tid,

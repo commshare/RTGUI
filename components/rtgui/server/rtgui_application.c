@@ -236,6 +236,8 @@ static void rtgui_event_dump(rt_thread_t tid, rtgui_event_t* event)
 #define rtgui_event_dump(tid, event)
 #endif
 
+static struct rtgui_application *_rtgui_application_role_list[RTGUI_APPLICATION_ROLE_MAX];
+
 rt_bool_t rtgui_application_event_handler(struct rtgui_object* obj, rtgui_event_t* event);
 
 static void _rtgui_application_constructor(struct rtgui_application *app)
@@ -244,6 +246,8 @@ static void _rtgui_application_constructor(struct rtgui_application *app)
 	rtgui_object_set_event_handler(RTGUI_OBJECT(app),
 			                       rtgui_application_event_handler);
 
+	app->next           = RT_NULL;
+	app->role           = RTGUI_APPLICATION_ROLE_NORMAL;
 	app->name           = RT_NULL;
 	/* set EXITED so we can destroy an application that just created */
 	app->state_flag     = RTGUI_APPLICATION_FLAG_EXITED;
@@ -258,10 +262,27 @@ static void _rtgui_application_constructor(struct rtgui_application *app)
 
 static void _rtgui_application_destructor(struct rtgui_application *app)
 {
+	struct rtgui_application *papp;
+
 	RT_ASSERT(app != RT_NULL);
 
 	rt_free(app->name);
 	app->name = RT_NULL;
+
+	/* remove myself from the role list */
+	papp = _rtgui_application_role_list[app->role];
+	RT_ASSERT(papp);
+	if (papp == app)
+		_rtgui_application_role_list[app->role] = app->next;
+	else
+	{
+		while (papp->next != app)
+		{
+			RT_ASSERT(papp->next);
+			papp = papp->next;
+		}
+		papp->next = app->next;
+	}
 }
 
 DEFINE_CLASS_TYPE(application, "application",
@@ -270,14 +291,16 @@ DEFINE_CLASS_TYPE(application, "application",
 	_rtgui_application_destructor,
 	sizeof(struct rtgui_application));
 
-struct rtgui_application* rtgui_application_create(
+struct rtgui_application* rtgui_application_create_with_role(
         rt_thread_t tid,
-        const char *myname)
+        const char *myname,
+        enum rtgui_application_role role)
 {
 	struct rtgui_application *app;
 
 	RT_ASSERT(tid != RT_NULL);
 	RT_ASSERT(myname != RT_NULL);
+	RT_ASSERT(role < RTGUI_APPLICATION_ROLE_MAX);
 
 	/* create application */
 	app = RTGUI_APPLICATION(rtgui_object_create(RTGUI_APPLICATION_TYPE));
@@ -302,6 +325,18 @@ struct rtgui_application* rtgui_application_create(
 	if (app->name == RT_NULL)
 		goto __name_err;
 
+	/* add the new app to the role list */
+	if (_rtgui_application_role_list[role] == RT_NULL)
+		_rtgui_application_role_list[role] = app;
+	else
+	{
+		struct rtgui_application *papp = _rtgui_application_role_list[role];
+		while (papp->next)
+			papp = papp->next;
+		papp->next = app;
+	}
+
+	app->role = role;
 	return app;
 
 __name_err:
@@ -310,6 +345,13 @@ __mq_err:
 	rtgui_object_destroy(RTGUI_OBJECT(app));
 	tid->user_data = 0;
 	return RT_NULL;
+}
+
+struct rtgui_application* rtgui_application_create(
+        rt_thread_t tid,
+        const char *myname)
+{
+	return rtgui_application_create_with_role(tid, myname, RTGUI_APPLICATION_ROLE_NORMAL);
 }
 
 #define _rtgui_application_check(app) \
@@ -400,6 +442,16 @@ rt_err_t rtgui_application_send(rt_thread_t tid, rtgui_event_t* event, rt_size_t
 	return result;
 }
 
+void rtgui_server_post_event(struct rtgui_event* event, rt_size_t size)
+{
+	struct rtgui_application *sapp = _rtgui_application_role_list[RTGUI_APPLICATION_ROLE_SERVER];
+	/* there should be only one server so no need to check app->next */
+	if (sapp != RT_NULL)
+		rtgui_application_send(sapp->tid, event, size);
+	else
+		rt_kprintf("post when server is not running\n");
+}
+
 rt_err_t rtgui_application_send_urgent(rt_thread_t tid, rtgui_event_t* event, rt_size_t event_size)
 {
 	rt_err_t result;
@@ -469,6 +521,19 @@ __return:
 	/* fini ack mailbox */
 	rt_mb_detach(&ack_mb);
 	return r;
+}
+
+rt_err_t rtgui_server_post_event_sync(struct rtgui_event* event, rt_size_t size)
+{
+	struct rtgui_application *sapp = _rtgui_application_role_list[RTGUI_APPLICATION_ROLE_SERVER];
+	/* there should be only one server so no need to check app->next */
+	if (sapp != RT_NULL)
+		return rtgui_application_send_sync(sapp->tid, event, size);
+	else
+	{
+		rt_kprintf("post when server is not running\n");
+		return -RT_ENOSYS;
+	}
 }
 
 rt_err_t rtgui_application_ack(rtgui_event_t* event, rt_int32_t status)
