@@ -291,6 +291,27 @@ DEFINE_CLASS_TYPE(application, "application",
 	_rtgui_application_destructor,
 	sizeof(struct rtgui_application));
 
+#ifdef RTGUI_USING_APPMGR
+static rt_err_t _rtgui_application_notify_create(struct rtgui_application *app)
+{
+	struct rtgui_application *appmgr;
+	struct rtgui_event_app eapp;
+
+	RT_ASSERT(app);
+
+	appmgr = _rtgui_application_role_list[RTGUI_APPLICATION_ROLE_APPMGR];
+	if (appmgr == RT_NULL)
+		return -RT_ENOSYS;
+
+	RTGUI_EVENT_APP_CREATE_INIT(&eapp);
+	eapp.app = app;
+	for (; appmgr; appmgr = appmgr->next)
+	{
+		rtgui_application_send_sync(appmgr->tid, &eapp, sizeof(eapp));
+	}
+}
+#endif
+
 struct rtgui_application* rtgui_application_create_with_role(
         rt_thread_t tid,
         const char *myname,
@@ -325,11 +346,18 @@ struct rtgui_application* rtgui_application_create_with_role(
 	if (app->name == RT_NULL)
 		goto __name_err;
 
+	app->role = role;
+#ifdef RTGUI_USING_APPMGR
+	if (role == RTGUI_APPLICATION_ROLE_NORMAL)
+	{
+		// FIXME: do we need to check the result?
+		_rtgui_application_notify_create(app);
+	}
+#endif
 	/* add the new app to the role list */
 	app->next = _rtgui_application_role_list[role];
 	_rtgui_application_role_list[role] = app;
 
-	app->role = role;
 	return app;
 
 __name_err:
