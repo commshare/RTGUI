@@ -45,6 +45,7 @@ int rt_application_init()
 	/* re-set graphic device */
 	rtgui_graphic_set_device(device);
 
+    appmgr_init();
 	wm_init();
 
 	return 0;
