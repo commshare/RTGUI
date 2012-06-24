@@ -691,8 +691,6 @@ rt_err_t rtgui_application_add_root_win(struct rtgui_application *app,
 	rwnode->next = app->root_win_list;
 	app->root_win_list = rwnode;
 
-	rt_kprintf("add root win\n");
-
 	return RT_EOK;
 }
 
@@ -713,8 +711,6 @@ void rtgui_application_remove_root_win(struct rtgui_application *app,
 	}
 	/* assert on remove a window that has been added */
 	RT_ASSERT(cnode);
-
-	rt_kprintf("remove root win\n");
 
 	(*pnode)->next = cnode->next;
 	rtgui_free(cnode);
