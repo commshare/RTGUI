@@ -47,6 +47,8 @@ enum rtgui_application_role
 
 typedef void (*rtgui_idle_func)(struct rtgui_object* obj, struct rtgui_event *event);
 
+struct _rtgui_root_win_node;
+
 struct rtgui_application
 {
 	struct rtgui_object parent;
@@ -77,6 +79,9 @@ struct rtgui_application
 
 	/* on idle event handler */
 	rtgui_idle_func on_idle;
+
+	/* the root windows which belong to this application */
+	struct _rtgui_root_win_node *root_win_list;
 };
 
 /**
@@ -104,6 +109,12 @@ rtgui_idle_func rtgui_application_get_onidle(void);
 struct rtgui_application* rtgui_application_self(void);
 
 rt_thread_t rtgui_application_get_server(void);
+
+rt_err_t rtgui_application_add_root_win(struct rtgui_application *app,
+		                                struct rtgui_win *win);
+void rtgui_application_remove_root_win(struct rtgui_application *app,
+		                               struct rtgui_win *win);
+rt_bool_t rtgui_application_event_handler(struct rtgui_object* object, rtgui_event_t* event);
 
 struct rtgui_event;
 rt_err_t rtgui_application_send(rt_thread_t tid, struct rtgui_event* event, rt_size_t event_size);

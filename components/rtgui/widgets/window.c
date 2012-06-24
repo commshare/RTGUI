@@ -156,6 +156,11 @@ rtgui_win_t* rtgui_win_create(struct rtgui_win* parent_window,
 	{
 		goto __on_err;
 	}
+
+    if (parent_window == RT_NULL &&
+        rtgui_application_add_root_win(rtgui_application_self(), win) != RT_EOK)
+        goto __on_err;
+
 	return win;
 
 __on_err:
@@ -185,6 +190,9 @@ void rtgui_win_destroy(struct rtgui_win* win)
 					(struct rtgui_event*)&eclose,
 					RT_TRUE);
 	}
+
+    if (win->parent_window == RT_NULL)
+        rtgui_application_remove_root_win(rtgui_application_self(), win);
 
 	if (win->flag & RTGUI_WIN_FLAG_MODAL)
 	{
