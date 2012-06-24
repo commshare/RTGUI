@@ -326,15 +326,8 @@ struct rtgui_application* rtgui_application_create_with_role(
 		goto __name_err;
 
 	/* add the new app to the role list */
-	if (_rtgui_application_role_list[role] == RT_NULL)
-		_rtgui_application_role_list[role] = app;
-	else
-	{
-		struct rtgui_application *papp = _rtgui_application_role_list[role];
-		while (papp->next)
-			papp = papp->next;
-		papp->next = app;
-	}
+	app->next = _rtgui_application_role_list[role];
+	_rtgui_application_role_list[role] = app;
 
 	app->role = role;
 	return app;
