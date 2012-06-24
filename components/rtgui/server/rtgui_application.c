@@ -435,14 +435,17 @@ rt_err_t rtgui_application_send(rt_thread_t tid, rtgui_event_t* event, rt_size_t
 	return result;
 }
 
-void rtgui_server_post_event(struct rtgui_event* event, rt_size_t size)
+rt_err_t rtgui_server_post_event(struct rtgui_event* event, rt_size_t size)
 {
 	struct rtgui_application *sapp = _rtgui_application_role_list[RTGUI_APPLICATION_ROLE_SERVER];
 	/* there should be only one server so no need to check app->next */
 	if (sapp != RT_NULL)
-		rtgui_application_send(sapp->tid, event, size);
+		return rtgui_application_send(sapp->tid, event, size);
 	else
+	{
 		rt_kprintf("post when server is not running\n");
+		return -RT_ENOSYS;
+	}
 }
 
 rt_err_t rtgui_application_send_urgent(rt_thread_t tid, rtgui_event_t* event, rt_size_t event_size)

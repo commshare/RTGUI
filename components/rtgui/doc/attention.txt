@@ -16,3 +16,6 @@ slider 处理上下键，上面的值小，下面的值大。
 
 7, 若窗口在销毁(destroy)时没有关闭，则 RTGUI 会先关闭之。也会调用 on_close 函数
 但是此函数的返回值会被忽略。
+
+8, rtgui_server_post_event 的返回值类型从 void 变为 rt_err_t。含义与
+rtgui_application_send 相同。

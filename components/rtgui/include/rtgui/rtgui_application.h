@@ -114,4 +114,8 @@ rt_err_t rtgui_application_recv(struct rtgui_event* event, rt_size_t event_size)
 rt_err_t rtgui_application_recv_nosuspend(struct rtgui_event* event, rt_size_t event_size);
 rt_err_t rtgui_application_recv_filter(rt_uint32_t type, struct rtgui_event* event, rt_size_t event_size);
 
+/* post an event to server */
+rt_err_t rtgui_server_post_event(struct rtgui_event* event, rt_size_t size);
+rt_err_t rtgui_server_post_event_sync(struct rtgui_event* event, rt_size_t size);
+
 #endif /* end of include guard: RTGUI_APPLICATION_H */
