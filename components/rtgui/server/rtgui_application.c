@@ -240,12 +240,6 @@ static struct rtgui_application *_rtgui_application_role_list[RTGUI_APPLICATION_
 
 rt_bool_t rtgui_application_event_handler(struct rtgui_object* obj, rtgui_event_t* event);
 
-struct _rtgui_root_win_node
-{
-	struct rtgui_win *win;
-	struct _rtgui_root_win_node *next;
-};
-
 static void _rtgui_application_constructor(struct rtgui_application *app)
 {
 	/* set event handler */
@@ -264,7 +258,6 @@ static void _rtgui_application_constructor(struct rtgui_application *app)
 	app->mq             = RT_NULL;
 	app->modal_object   = RT_NULL;
 	app->on_idle        = RT_NULL;
-	app->root_win_list  = RT_NULL;
 }
 
 static void _rtgui_application_destructor(struct rtgui_application *app)
@@ -391,13 +384,6 @@ do { \
     RT_ASSERT(app->mq != RT_NULL); \
 } while (0)
 
-static void _rtgui_application_free_rwlist(struct _rtgui_root_win_node *node)
-{
-	if (node->next != RT_NULL)
-		_rtgui_application_free_rwlist(node->next);
-	rtgui_free(node);
-}
-
 void rtgui_application_destroy(struct rtgui_application *app)
 {
     _rtgui_application_check(app);
@@ -408,11 +394,6 @@ void rtgui_application_destroy(struct rtgui_application *app)
 				   app->name);
 		return;
 	}
-
-	if (app->root_win_list->next != RT_NULL)
-		_rtgui_application_free_rwlist(app->root_win_list->next);
-	if (app->root_win_list != RT_NULL)
-		_rtgui_application_free_rwlist(app->root_win_list);
 
 	app->tid->user_data = 0;
 	rt_mq_delete(app->mq);
@@ -673,47 +654,6 @@ rt_inline rt_bool_t _rtgui_application_dest_handle(
 		rt_kprintf("RTGUI ERROR:server sent a event(%d) without wid\n", event->type);
 		return RT_FALSE;
 	}
-}
-
-rt_err_t rtgui_application_add_root_win(struct rtgui_application *app,
-		                                struct rtgui_win *win)
-{
-	struct _rtgui_root_win_node *rwnode;
-
-	RT_ASSERT(app);
-	RT_ASSERT(win);
-
-	rwnode = (struct _rtgui_root_win_node*)rtgui_malloc(sizeof(*rwnode));
-	if (rwnode == RT_NULL)
-		return -RT_ERROR;
-
-	rwnode->win = win;
-	rwnode->next = app->root_win_list;
-	app->root_win_list = rwnode;
-
-	return RT_EOK;
-}
-
-void rtgui_application_remove_root_win(struct rtgui_application *app,
-		                               struct rtgui_win *win)
-{
-	struct _rtgui_root_win_node **pnode, *cnode;
-
-	RT_ASSERT(app);
-	RT_ASSERT(win);
-
-	pnode = &app->root_win_list;
-	cnode = app->root_win_list;
-	while (cnode && cnode->win != win)
-	{
-		pnode = &cnode;
-		cnode = cnode->next;
-	}
-	/* assert on remove a window that has been added */
-	RT_ASSERT(cnode);
-
-	(*pnode)->next = cnode->next;
-	rtgui_free(cnode);
 }
 
 rt_bool_t rtgui_application_event_handler(struct rtgui_object* object, rtgui_event_t* event)

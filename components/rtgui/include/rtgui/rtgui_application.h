@@ -47,8 +47,6 @@ enum rtgui_application_role
 
 typedef void (*rtgui_idle_func)(struct rtgui_object* obj, struct rtgui_event *event);
 
-struct _rtgui_root_win_node;
-
 struct rtgui_application
 {
 	struct rtgui_object parent;
@@ -79,9 +77,6 @@ struct rtgui_application
 
 	/* on idle event handler */
 	rtgui_idle_func on_idle;
-
-	/* the root windows which belong to this application */
-	struct _rtgui_root_win_node *root_win_list;
 };
 
 /**
