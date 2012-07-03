@@ -78,4 +78,6 @@
 
 #define  RTGUI_EVENT_DEBUG
 #undef RTGUI_USING_SMALL_SIZE
+#define RTGUI_USING_APPMGR
+
 #endif
