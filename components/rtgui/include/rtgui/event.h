@@ -324,7 +324,7 @@ struct rtgui_event_resize
 	rt_int16_t x, y;
 	rt_int16_t w, h;
 };
-#define RTGUI_EVENT_RESIZE_INIT(e) RTGUI_EVENT_INIT(&((e)->parent) RTGUI_EVENT_RESIZE)
+#define RTGUI_EVENT_RESIZE_INIT(e) RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_RESIZE)
 
 /*
  * RTGUI Application Event
