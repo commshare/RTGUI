@@ -77,6 +77,9 @@ struct rtgui_application
 
 	/* on idle event handler */
 	rtgui_idle_func on_idle;
+
+	/* the window that is active in this application */
+	struct rtgui_win *active_win;
 };
 
 /**

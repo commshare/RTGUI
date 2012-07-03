@@ -258,6 +258,7 @@ static void _rtgui_application_constructor(struct rtgui_application *app)
 	app->mq             = RT_NULL;
 	app->modal_object   = RT_NULL;
 	app->on_idle        = RT_NULL;
+	app->active_win     = RT_NULL;
 }
 
 static void _rtgui_application_destructor(struct rtgui_application *app)
@@ -719,6 +720,16 @@ rt_bool_t rtgui_application_event_handler(struct rtgui_object* object, rtgui_eve
 			if (ecmd->wid != RT_NULL)
 				return _rtgui_application_dest_handle(app, event);
 		}
+		break;
+
+	case RTGUI_EVENT_APP_ACTIVATE:
+		{
+			struct rtgui_event_app *eapp = (struct rtgui_event_app*)event;
+			RT_ASSERT(eapp->app == app);
+			if (app->active_win)
+				rtgui_win_activate(app->active_win);
+		}
+		break;
 
 	default:
 		return rtgui_object_event_handler(object, event);

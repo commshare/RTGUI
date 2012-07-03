@@ -472,6 +472,14 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object* object, struct rtgui_even
 		{
 			win->on_activate(RTGUI_OBJECT(object), event);
 		}
+
+		{
+			struct rtgui_application *app_self;
+			app_self = rtgui_application_self();
+			RT_ASSERT(app_self);
+			app_self->active_win = win;
+		}
+
 		break;
 
 	case RTGUI_EVENT_WIN_DEACTIVATE:
